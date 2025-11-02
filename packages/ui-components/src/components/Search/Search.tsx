@@ -3,12 +3,11 @@ import SearchMui from '@mui/icons-material/Search';
 import debounce from 'lodash/debounce';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDispatch, useSelector } from 'react-redux';
-import { RouteComponentProps, withRouter } from 'react-router';
+import { useNavigate } from 'react-router';
 
 import { SearchResultWeb } from '@verdaccio/types';
 
-import { Dispatch, RootState, useConfig } from '../../';
+import { useConfig } from '../../';
 import { Route } from '../../utils';
 import AutoComplete from './AutoComplete';
 import SearchItem from './SearchItem';
@@ -19,23 +18,25 @@ const CONSTANTS = {
   ABORT_ERROR: 'AbortError',
 };
 
-const Search: React.FC<RouteComponentProps> = ({ history }) => {
+const Search: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const {
     configOptions: { flags },
   } = useConfig();
   const searchRemote = flags?.searchRemote || false;
-  const { suggestions } = useSelector((state: RootState) => state.search);
-  const isLoading = useSelector((state: RootState) => state?.loading?.models.search);
-  const dispatch = useDispatch<Dispatch>();
+  // TODO: FIX THIS
+  const { suggestions } = { suggestions: [] };
+  // TODO: FIX THIS
+  const isLoading = false;
 
   /**
    * Cancel all the requests which are in pending state.
    */
   const cancelAllSearchRequests = useCallback(() => {
-    dispatch.search.clearRequestQueue();
-    dispatch.search.saveSearch({ suggestions: [] });
-  }, [dispatch]);
+    // dispatch.search.clearRequestQueue();
+    // dispatch.search.saveSearch({ suggestions: [] });
+  }, []);
 
   /**
    * As user focuses out from input, we cancel all the request from requestList
@@ -62,29 +63,26 @@ const Search: React.FC<RouteComponentProps> = ({ history }) => {
           if (searchRemote) {
             // TODO: check this part
             // @ts-ignore
-            history.push(`${Route.DETAIL}${value.package.name}`);
+            navigate(`${Route.DETAIL}${value.package.name}`);
           } else {
-            history.push(`${Route.DETAIL}${value.name}`);
+            navigate(`${Route.DETAIL}${value.name}`);
           }
           break;
       }
     },
-    [history, searchRemote]
+    [navigate, searchRemote]
   );
 
   /**
    * Fetch packages from API.
    * For AbortController see: https://developer.mozilla.org/en-US/docs/Web/API/AbortController
    */
-  const handleFetchPackages = useCallback(
-    ({ value }: { value: string }) => {
-      if (value?.trim() !== '') {
-        dispatch.search.clearRequestQueue();
-        dispatch.search.getSuggestions({ value });
-      }
-    },
-    [dispatch]
-  );
+  const handleFetchPackages = useCallback(({ value }: { value: string }) => {
+    if (value?.trim() !== '') {
+      // dispatch.search.clearRequestQueue();
+      // dispatch.search.getSuggestions({ value });
+    }
+  }, []);
 
   const renderInput = (params) => {
     return (
@@ -165,4 +163,4 @@ const Search: React.FC<RouteComponentProps> = ({ history }) => {
   );
 };
 
-export default withRouter(Search as any);
+export default Search;

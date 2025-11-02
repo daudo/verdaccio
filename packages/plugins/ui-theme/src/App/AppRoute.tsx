@@ -1,11 +1,17 @@
-import { createBrowserHistory } from 'history';
 import React from 'react';
-import { Route as ReactRouterDomRoute, Router, Switch } from 'react-router-dom';
+import { BrowserRouter, Outlet, Route as RouterRoute, Routes } from 'react-router';
 
-import { NotFound, Route, VersionProvider, loadable } from '@verdaccio/ui-components';
+import {
+  AuthV1Provider,
+  ManifestsProvider,
+  NotFound,
+  Route,
+  VersionProvider,
+  loadable,
+} from '@verdaccio/ui-components';
 
 const VersionPage = loadable(() => import(/* webpackChunkName: "Version" */ '../pages/Version'));
-const Front = loadable(() => import(/* webpackChunkName: "Home" */ '../pages/Front'));
+const FrontPage = loadable(() => import(/* webpackChunkName: "Home" */ '../pages/Front'));
 const Login = loadable(() => import(/* webpackChunkName: "Login" */ '../pages/Security/Login'));
 const AddUser = loadable(
   () => import(/* webpackChunkName: "AddUser" */ '../pages/Security/AddUser')
@@ -17,55 +23,65 @@ const Success = loadable(
   () => import(/* webpackChunkName: "Success" */ '../pages/Security/Success')
 );
 
-export const history = createBrowserHistory({
-  // @ts-ignore
-  basename: window?.__VERDACCIO_BASENAME_UI_OPTIONS?.url_prefix,
-});
+// Layout component to wrap auth routes with AuthV1Provider
+const AuthLayout: React.FC = () => (
+  <AuthV1Provider>
+    <Outlet />
+  </AuthV1Provider>
+);
 
 const AppRoute: React.FC = () => {
   return (
-    <Router history={history}>
-      <Switch>
-        <ReactRouterDomRoute exact={true} path={Route.ROOT}>
-          <Front />
-        </ReactRouterDomRoute>
-        <ReactRouterDomRoute exact={true} path={Route.PACKAGE}>
+    <Routes>
+      <RouterRoute
+        path={Route.ROOT}
+        element={
+          <ManifestsProvider>
+            <FrontPage />
+          </ManifestsProvider>
+        }
+      />
+      <RouterRoute
+        path={Route.PACKAGE}
+        element={
           <VersionProvider>
             <VersionPage />
           </VersionProvider>
-        </ReactRouterDomRoute>
-        <ReactRouterDomRoute exact={true} path={Route.PACKAGE_VERSION}>
+        }
+      />
+      <RouterRoute
+        path={Route.PACKAGE_VERSION}
+        element={
           <VersionProvider>
             <VersionPage />
           </VersionProvider>
-        </ReactRouterDomRoute>
-        <ReactRouterDomRoute exact={true} path={Route.SCOPE_PACKAGE_VERSION}>
+        }
+      />
+      <RouterRoute
+        path={Route.SCOPE_PACKAGE_VERSION}
+        element={
           <VersionProvider>
             <VersionPage />
           </VersionProvider>
-        </ReactRouterDomRoute>
-        <ReactRouterDomRoute exact={true} path={Route.SCOPE_PACKAGE}>
+        }
+      />
+      <RouterRoute
+        path={Route.SCOPE_PACKAGE}
+        element={
           <VersionProvider>
             <VersionPage />
           </VersionProvider>
-        </ReactRouterDomRoute>
-        <ReactRouterDomRoute exact={true} path={Route.LOGIN}>
-          <Login />
-        </ReactRouterDomRoute>
-        <ReactRouterDomRoute exact={true} path={Route.SUCCESS}>
-          <Success />
-        </ReactRouterDomRoute>
-        <ReactRouterDomRoute exact={true} path={Route.ADD_USER}>
-          <AddUser />
-        </ReactRouterDomRoute>
-        <ReactRouterDomRoute exact={true} path={Route.CHANGE_PASSWORD}>
-          <ChangePassword />
-        </ReactRouterDomRoute>
-        <ReactRouterDomRoute>
-          <NotFound />
-        </ReactRouterDomRoute>
-      </Switch>
-    </Router>
+        }
+      />
+      {/* Auth routes wrapped in AuthV1Provider via layout */}
+      <RouterRoute element={<AuthLayout />}>
+        <RouterRoute path={Route.LOGIN} element={<Login />} />
+        <RouterRoute path={Route.SUCCESS} element={<Success />} />
+        <RouterRoute path={Route.ADD_USER} element={<AddUser />} />
+        <RouterRoute path={Route.CHANGE_PASSWORD} element={<ChangePassword />} />
+      </RouterRoute>
+      <RouterRoute path="*" element={<NotFound />} />
+    </Routes>
   );
 };
 

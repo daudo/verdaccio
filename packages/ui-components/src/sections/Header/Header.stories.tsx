@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-webpack5';
 import { HttpResponse, http } from 'msw';
 import React from 'react';
-import { MemoryRouter, Route } from 'react-router';
+import { MemoryRouter, Route, Routes } from 'react-router';
 
 import { HeaderInfoDialog } from '../../';
 import { VersionProvider } from '../../providers';
@@ -34,11 +34,16 @@ function CustomInfoDialog({ onCloseDialog, title, isOpen }) {
 export const HeaderAll: Story = {
   render: () => (
     <MemoryRouter initialEntries={[`/-/web/detail/storybook`]}>
-      <Route exact={true} path="/-/web/detail/:package">
-        <VersionProvider>
-          <Header HeaderInfoDialog={CustomInfoDialog} />
-        </VersionProvider>
-      </Route>
+      <Routes>
+        <Route
+          path="/-/web/detail/:package"
+          element={
+            <VersionProvider>
+              <Header HeaderInfoDialog={CustomInfoDialog} />
+            </VersionProvider>
+          }
+        />
+      </Routes>
     </MemoryRouter>
   ),
   parameters: {
@@ -52,6 +57,15 @@ export const HeaderAll: Story = {
         }),
         http.get('https://my-registry.org/-/verdaccio/data/search/*', () => {
           return HttpResponse.json(require('../../../vitest/api/search-verdaccio.json'));
+        }),
+        http.post('https://my-registry.org/-/verdaccio/sec/login', async ({ request }) => {
+          const body = (await request.json()) as { username: string; password: string };
+
+          if (body.username === 'fail') {
+            return new HttpResponse('unauthorized', { status: 401 });
+          }
+
+          return HttpResponse.json({ username: body.username, token: 'valid token' });
         }),
       ],
     },
